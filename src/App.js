@@ -10,13 +10,75 @@ const Operators = {
   EQUAL: "=",
 };
 export default function App() {
-  const { result, setResult } = useState(0);
+  const [result, setResult] = useState(0);
+  const [formula, setFormula] = useState([]);
+
   const width = (useWindowDimensions().width - 5) / 4;
+  const calculate = () => {
+    let calculatedNumber = 0;
+    let operator = "";
+    formula.forEach((value) => {
+      if ([Operators.PLUS, Operators.MINUS].includes(value)) {
+        operator = value;
+      } else {
+        if (operator === Operators.PLUS) {
+          calculatedNumber += value;
+        } else if (operator === Operators.MINUS) {
+          calculatedNumber -= value;
+        } else {
+          calculatedNumber = value;
+        }
+      }
+    });
+    setResult(calculatedNumber);
+    setFormula([]);
+  };
+  const onPressNumber = (num) => {
+    const last = formula[formula.length - 1];
+
+    if (isNaN(last)) {
+      setResult(num);
+      setFormula((prev) => [...prev, num]);
+    } else {
+      const newNumber = (last ?? 0) * 10 + num;
+      setResult(newNumber);
+      setFormula((prev) => {
+        prev.pop();
+        return [...prev, newNumber];
+      });
+    }
+  };
+  const onPressOperator = (operator) => {
+    switch (operator) {
+      case Operators.CLEAR:
+        setResult(0);
+        setFormula([]);
+        break;
+      case Operators.EQUAL:
+        calculate();
+        break;
+      default:
+        {
+          const last = formula[formula.length - 1];
+          if ([Operators.PLUS, Operators.MINUS].includes(last)) {
+            setFormula((prev) => {
+              prev.pop();
+              return [...prev, operator];
+            });
+          } else {
+            setFormula((prev) => [...prev, operator]);
+          }
+        }
+        break;
+    }
+  };
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
       <View style={styles.resultContainer}>
-        <Text style={styles.result}>{result}</Text>
+        <Text style={styles.result}>
+          {result.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+        </Text>
       </View>
       <View style={styles.buttonContainer}>
         <View style={styles.leftPad}>
@@ -25,7 +87,9 @@ export default function App() {
               <Button
                 key={num}
                 title={num.toString()}
-                onPress={() => {}}
+                onPress={() => {
+                  onPressNumber(num);
+                }}
                 buttonStyle={{ width, height: width, marginTop: 1 }}
               />
             ))}
@@ -34,12 +98,16 @@ export default function App() {
           <View style={styles.bottom}>
             <Button
               title="0"
-              onPress={() => {}}
+              onPress={() => {
+                onPressNumber(0);
+              }}
               buttonStyle={{ width: width * 2, height: width }}
             />
             <Button
-              title="="
-              onPress={() => {}}
+              title={Operators.EQUAL}
+              onPress={() => {
+                onPressOperator(Operators.EQUAL);
+              }}
               buttonStyle={{ width, height: width }}
               buttonType={ButtonTypes.OPERATOR}
             />
@@ -48,19 +116,25 @@ export default function App() {
         <View style={styles.operator}>
           <Button
             title={Operators.CLEAR}
-            onPress={() => {}}
+            onPress={() => {
+              onPressOperator(Operators.CLEAR);
+            }}
             buttonStyle={{ width, height: width, marginBotton: 1 }}
             buttonType={ButtonTypes.OPERATOR}
           />
           <Button
             title={Operators.MINUS}
-            onPress={() => {}}
+            onPress={() => {
+              onPressOperator(Operators.MINUS);
+            }}
             buttonStyle={{ width, height: width, marginBotton: 1 }}
             buttonType={ButtonTypes.OPERATOR}
           />
           <Button
             title={Operators.PLUS}
-            onPress={() => {}}
+            onPress={() => {
+              onPressOperator(Operators.PLUS);
+            }}
             buttonStyle={{ width, height: width * 2, marginBotton: 1 }}
             buttonType={ButtonTypes.OPERATOR}
           />
@@ -92,7 +166,7 @@ const styles = StyleSheet.create({
     backgroundColor: "black",
   },
   result: {
-    color: "#ffffff",
+    color: "white",
     fontSize: 60,
     fontWeight: 700,
     paddingBottom: 30,
